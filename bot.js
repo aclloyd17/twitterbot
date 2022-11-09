@@ -4,13 +4,14 @@ var Twit = require('twit');
 // We need to include our configuration file
 var T = new Twit(require('./config.js'));
 
-// This is the URL of a search for the latest tweets on the '#mediaarts' hashtag.
+// This is the URL of a search for the latest tweets on the '#georgiatech' hashtag.
 var georgiaTechSearch = {q: "#georgiatech", count: 10, result_type: "recent"}; 
 
-// This function finds the latest tweet with the #mediaarts hashtag, and retweets it.
+// This function finds the latest tweet with the #georgiatech hashtag, and retweets it.
 function retweetLatest() {
 	T.get('search/tweets', georgiaTechSearch, function (error, data) {
-	  // log out any errors and responses
+	  // log out any errors and responses - if the tweet will not be tweeted, there's one error
+		//if there is an error getting to twitter, there is another.
 	  console.log(error, data);
 	  // If our search request to the server had no errors...
 	  if (!error) {
@@ -36,6 +37,8 @@ function retweetLatest() {
 
 // ADDED MATERIAL
 
+// This variable contains strings that we will want to tweet at regular intervals while the bot is running.
+// they're meant to be jokes, mainly inside jokes to GT Students.
 var pre = [
 	"I'm about to give sideways more than a penny to pass this final",
 	"happy end of add/drop season!",
@@ -53,10 +56,13 @@ var pre = [
 	"sweethut has singlehandedly kept me alive this semester"
 ]
 
+//this function chooses a random string from the variable above
 Array.prototype.pick = function() {
 	return this[Math.floor(Math.random()*this.length)];
 }
 
+
+// calls pick() to get the tweet, then sends it out to twitter. DEBUG provides context for errors, if it isn't tweeted properly.
 function tweetRandom() {
 
 	let tweetText = pre.pick();
@@ -69,19 +75,21 @@ function tweetRandom() {
 				console.log('Error: ', err);
 			}
 			else {
+				//logs if there are no errors!
 				console.log('Tweeted: ', tweetText);
 			}
 		});
 }
 
 // GETTING DATA FROM TWITTER
-
+// looks for the hashtag for georgiatech
 var getParams = {
 	q: "#georgiatech",
 	count: 10
 	// lang: en
 }
 
+//the tweets that were found, which will be logged to the console.
 function gotData(err, data, response) {
 	var tweets = data.statuses;
 	for (var i = 0; i < tweets.length; i++) {
@@ -92,6 +100,8 @@ function gotData(err, data, response) {
 T.get('search/tweets', getParams, gotData);
 
 // POSTING
+//this function is what actually posts the tweets.
+//it is called in a few of the methods in order to actually push the tweets we create into the twitterverse.
 
 function tweetIt(text) { // General tweet method
 	var tweet = {
@@ -99,6 +109,7 @@ function tweetIt(text) { // General tweet method
 	}
 
 	function tweeted(err, data, response) {
+		//errors if the tweet doesn't work
 		if (err) {
 			console.log("Something went wrong while trying to tweet!");
 		} else {
@@ -110,6 +121,9 @@ function tweetIt(text) { // General tweet method
 }
 
 // USING THE TWITTER STREAM
+
+//this will look for a user that follows us and tweet to mention them.
+//it will say "@username thank you for following!"
 
 var stream = T.stream('user'); // Tweet after follow
 
@@ -123,6 +137,7 @@ function followed(eventMsg) {
 
 var stream2 = T.stream('user'); // Tweet after mention
 
+//uses the stream in order to create the tweet in the event that our bot is followed.
 stream.on('tweet', tweetEvent);
 
 function tweetEvent(eventMsg) {
@@ -137,6 +152,7 @@ function tweetEvent(eventMsg) {
 }
 
 // POSTING OTHER MEDIA
+//takes a picture from the pictures file (linked through the path) and tweets it.
 
 function postPicture(filePath) { // Post a picture
 	T.postMediaChunked({ file_path: filePath }, picturePost); 
