@@ -35,8 +35,6 @@ function retweetLatest() {
 	});
 }
 
-// ADDED MATERIAL
-
 // This variable contains strings that we will want to tweet at regular intervals while the bot is running.
 // they're meant to be jokes, mainly inside jokes to GT Students.
 var pre = [
@@ -85,7 +83,7 @@ function tweetRandom() {
 // // GETTING DATA FROM TWITTER
 // // looks for the hashtag for georgiatech
 var getParams = {
-	q: "#georgiatech",
+	q: "#georgiatech, #gatech",
 	count: 10
 	// lang: en
 }
@@ -99,6 +97,39 @@ function gotData(err, data, response) {
 }
 
 T.get('search/tweets', getParams, gotData);
+
+// FAVORITING
+// This uses the twitter stream to help us favorite posts related to GT
+var favoriteTweet = function() {
+	var fParams = { // Here are the parameters for finding tweets to favorite
+		q: '#georgiatech, #gatech',
+		result_type: 'recent',
+		lang: 'en'
+	}
+  
+	// This finds the tweet with the set parameters
+	T.get('search/tweets', fParams, function(err,data){
+  
+	  var tweet = data.statuses;
+	  var randomTweet = randomTweetPicker(tweet);   // picks a random tweet to favorite
+  
+	  if(typeof randomTweet != 'undefined'){
+		T.post('favorites/create', {id: randomTweet.id_str}, function(err, response){ // Favorites the tweet
+		  if(err){
+			console.log('This cannot be favorited!'); // If there's an error, we receive this.
+		  }
+		  else{
+			console.log('You favorited a post!'); // Otherwise, it's a success!
+		  }
+		});
+	  }
+	});
+  }
+  // function to generate a random tweet tweet
+  function randomTweetPicker (arr) {
+	var index = Math.floor(Math.random()*arr.length);
+	return arr[index];
+  };
 
 // // POSTING
 // //this function is what actually posts the tweets.
@@ -123,70 +154,43 @@ function tweetIt(text) { // General tweet method
 
 // // USING THE TWITTER STREAM
 
-// //this will look for a user that follows us and tweet to mention them.
-// //it will say "@username thank you for following!"
+// //this will look for a user that mentions us and tweet to mention them.
+// //it will say "@username thank you for mentioning me!"
 
-// var stream = T.stream('user'); // Tweet after follow
+var mParams = { // These are the parameters to search for the mention
+	q: "@005botlmc",
+	count: 10,
+	lang: 'en'
+}
 
-// const BEARER_TOKEN = "AAAAAAAAAAAAAAAAAAAAAP38iQEAAAAAMYRbZea1BUsjI9IjH1kDMIoPDVg%3D40yzUSBBxfcDBcVUT3jSC885f2OAOOqeK4ZvwUrDBKQBf0bLHd";
+function replyToMention() { // This function helps to dissect the tweet we mention and reply to the mentioner
+	T.get('search/tweets', mParams, function (error, data) {
+	  console.log(error, data);
+	  if (!error) {
+		var mentionID = data.statuses[0].id_str;
+		var replyTo = data.statuses[0].in_reply_to_screen_name; // This is our bot's screen name
+		var from = data.statuses[0].user.screen_name; // This is who mentioned us
+		if (replyTo == "005botlmc") {
+			tweetIt("@" + from + " thank you for mentioning me!");
+		}
+	  }
+	  else {
+	  	console.log('There was an error with your mention search:', error); // If there's an error, it sends us this in the console
+	  }
+	});
+}
 
-// const client = process.env.BEARER_TOKEN;
-// const stream = T.stream('tweets/sample/stream');
-// var stream = T.stream('statuses/filter', { track: '@005botlmc' }); // Tweet after follow
+// THESE ARE VARIOUS TESTS WE RAN
 
-// function followed(eventMsg) {
-// 	let name = eventMsg.source.name;
-// 	let screenName = eventMsg.source.screen_name;
-// 	tweetIt("@" + screenName + " thank you for following!");
-// }
-
-// stream.on('follow', followed);
-
-// var stream2 = T.stream('user'); // Tweet after mention
-// // var stream2 = T.stream('statuses/filter', { track: '@005botlmc' });
-
-// function tweetEvent(eventMsg) {
-// 	let replyTo = eventMsg.in_reply_to_screen_name;
-// 	let text = eventMsg.text;
-// 	let from = eventMsg.user.screen_name;
-
-// 	if (replyTo == "005botlmc") {
-// 		let newTweet = "@" + from + " i am here";
-// 		tweetIt(newTweet);
-// 	}
-// }
-
-// //uses the stream in order to create the tweet in the event that our bot is followed.
-// stream2.on('tweet', tweetEvent);
-
-// POSTING OTHER MEDIA
-//takes a picture from the pictures file (linked through the path) and tweets it.
-
-// function postPicture(filePath) { // Post a picture
-
-// 	function picturePost(err, data, response) {
-// 		if (err) {
-// 			console.log("Error: " + err);
-// 		} else {
-// 			console.log("Picture posted!");
-// 		}
-// 	}
-
-// 	T.postMediaChunked({ file_path: filePath }, picturePost); 
-// }
-
-// // POSTS
-// postPicture("./Pictures/buzz_fisheye.jpg");
-
-// END OF ADDED MATERIAL
-
-// Try to retweet something as soon as we run the program...
 // retweetLatest();
 // tweetRandom();
 // tweetIt("i'm alive!");
+
 // 1000 ms = 1 second, 1 sec * 60 = 1 min, 1 min * 60 = 1 hour --> 1000 * 60 * 60
 
 // POSTING INTERVALS
 
-setInterval(retweetLatest, 1000 * 60 * 2); // Every 2 minutes
-setInterval(tweetRandom, 1000 * 60 * 5); // Every 5 minutes
+setInterval(retweetLatest, 1000 * 60 * 120); // Every 2 hours
+setInterval(tweetRandom, 1000 * 60 * 1440); // Every day
+setInterval(favoriteTweet, 1000 * 60 * 60); // Every hour
+setInterval(replyToMention, 1000 * 60 * 1440); // Every day
