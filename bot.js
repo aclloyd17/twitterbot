@@ -1,3 +1,8 @@
+// This is our Twitterbot, funny.gt ! It's job is to tweet funny things relating to Georgia Tech and engaging with the campus community!
+// It tweets, retweets, replies to mentions, gets info from Twitter, and favorites posts related to Georgia Tech.
+// All of these things happen on timed intervals that you'll see at the bottom of this file.
+// There are also a couple of individual tests commented at the bottom in case you would like to use those to test instead of the intervals.
+
 // Our Twitter library
 var Twit = require('twit');
 
@@ -80,15 +85,15 @@ function tweetRandom() {
 		});
 }
 
-// // GETTING DATA FROM TWITTER
-// // looks for the hashtag for georgiatech
+// GETTING DATA FROM TWITTER
+// looks for posts with the hashtags for #georgiatech AND #gatech making it more likely to be directly related to the school
 var getParams = {
 	q: "#georgiatech, #gatech",
 	count: 10
 	// lang: en
 }
 
-// //the tweets that were found, which will be logged to the console.
+//the tweets that were found, which will be logged to the console.
 function gotData(err, data, response) {
 	var tweets = data.statuses;
 	for (var i = 0; i < tweets.length; i++) {
@@ -131,9 +136,9 @@ var favoriteTweet = function() {
 	return arr[index];
   };
 
-// // POSTING
-// //this function is what actually posts the tweets.
-// //it is called in a few of the methods in order to actually push the tweets we create into the twitterverse.
+// POSTING
+//this function is what actually posts the tweets.
+//it is called in a few of the methods in order to actually push the tweets we create into the twitterverse.
 
 function tweetIt(text) { // General tweet method
 	var tweet = {
@@ -152,10 +157,10 @@ function tweetIt(text) { // General tweet method
 	T.post('statuses/update', tweet, tweeted);
 }
 
-// // USING THE TWITTER STREAM
+// USING THE TWITTER STREAM
 
-// //this will look for a user that mentions us and tweet to mention them.
-// //it will say "@username thank you for mentioning me!"
+//this will look for a user that mentions us and tweet to mention them.
+//it will say "@username thank you for mentioning me!"
 
 var mParams = { // These are the parameters to search for the mention
 	q: "@005botlmc",
